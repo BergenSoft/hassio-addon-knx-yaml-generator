@@ -21,8 +21,12 @@ class Settings:
         Settings.__instance = self
 
         # Read user settings
-        with open("/data/options.json") as json_data:
-            settings = json.load(json_data)
+        if os.path.isfile("/data/options.json"):
+            with open("/data/options.json") as json_data:
+                settings = json.load(json_data)
+        elif os.path.isfile("./data/options.json"):
+            with open("./data/options.json") as json_data:
+                settings = json.load(json_data)
 
         # publish path properties
         self.path_generator = settings["path_generator"]
@@ -32,7 +36,7 @@ class Settings:
         self.path_output = settings["path_output"]
 
         # Copy examples if needed
-        self.__prepareExample("./examples/path_generator.yaml", self.path_generator)
+        self.__prepareExample("./examples/generator.yaml", self.path_generator)
         self.__prepareExample("./examples/add_entities.yaml", self.path_add_entities)
         self.__prepareExample("./examples/grp.csv", self.path_csv_grp)
 

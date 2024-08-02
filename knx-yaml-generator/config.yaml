@@ -2,7 +2,7 @@ name: "KNX YAML Generator"
 description: >-
     This addon is generating a knx.yaml file that contains all entities.
     The file is generated on user defined rules.
-version: "0.1.0"
+version: "0.1.1"
 slug: "knx_yaml_generator"
 url: "https://github.com/BergenSoft/hassio-addon-knx-yaml-generator"
 init: false

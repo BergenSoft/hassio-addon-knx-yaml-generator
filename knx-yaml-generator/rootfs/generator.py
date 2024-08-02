@@ -72,7 +72,7 @@ class Generator:
         if addEntitiesPath is not None and addEntitiesPath != "" and os.path.isfile(addEntitiesPath):
             with open(addEntitiesPath, "r") as file:
                 addEntries = yaml.safe_load(file)
-                
+
             if addEntries is not None:
                 for key in addEntries:
                     if key not in self.__result:
@@ -84,7 +84,7 @@ class Generator:
 
         # Make backup if target file exists
         if os.path.isfile(targetPath):
-            backupPath = os.path.join(Settings.instance().path_backup, Path(targetPath).stem + "_" + time.strftime("%Y-%m-%d") + Path(targetPath).suffix)
+            backupPath = os.path.join(Settings.instance().path_backup, Path(targetPath).stem + "_" + time.strftime("%Y-%m-%d_%H%M%S") + Path(targetPath).suffix)
             os.rename(targetPath, backupPath)
 
         # write target file
@@ -227,7 +227,7 @@ class Generator:
 
         # Add constant values to items
         for dataItem in datas:
-            if dataItem["data"] is str:
+            if isinstance(dataItem["data"], str):
                 for matchName in tempResult:
                     tempResult[matchName][dataItem["name"]] = dataItem["data"]
 

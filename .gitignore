@@ -1,4 +1,5 @@
 .vscode
 test
+data
 __pycache__/
 *.code-workspace

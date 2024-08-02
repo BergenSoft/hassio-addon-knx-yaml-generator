@@ -183,7 +183,7 @@ Select the following settings:
 The absolute path to a directory where the backup of the knx.yaml file is placed.
 If the directory doesn't exist, it will be created.
 
-Before overwriting the output file, the existing file is moved to the backup folder and renamed to `original_name_2024_01_01.yaml`.
+Before overwriting the output file, the existing file is moved to the backup folder and renamed to `original_name_yyyy-mm-ss_hhmmss.yaml`.
 Only then the new file is generated.
 
 ## config: path_output
