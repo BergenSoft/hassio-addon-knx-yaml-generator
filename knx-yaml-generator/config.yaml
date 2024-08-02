@@ -1,0 +1,29 @@
+name: "KNX YAML Generator"
+description: >-
+    This addon is generating a knx.yaml file that contains all entities.
+    The file is generated on user defined rules.
+version: "0.1.0"
+slug: "knx_yaml_generator"
+url: "https://github.com/BergenSoft/hassio-addon-knx-yaml-generator"
+init: false
+startup: "once"
+arch:
+    - aarch64
+    - amd64
+    - armhf
+    - armv7
+    - i386
+map:
+    - config:rw
+options:
+    path_generator: /config/own/knx_yaml_generator/generator.yaml
+    path_add_entities: /config/own/knx_yaml_generator/add_entities.yaml
+    path_csv_grp: /config/own/knx_yaml_generator/grp.csv
+    path_backup: /config/own/knx_yaml_generator/backups/
+    path_output: /config/own/knx_yaml_generator/knx.yaml
+schema:
+    path_generator: str
+    path_add_entities: str
+    path_csv_grp: str
+    path_backup: str
+    path_output: str

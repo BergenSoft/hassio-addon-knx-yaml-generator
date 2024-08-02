@@ -1,0 +1,5 @@
+"Group name"	"Address"	"Central"	"Unfiltered"	"Description"	"DatapointType"	"Security"
+"Light"	"0/-/-"	""	""	""	""	"Auto"
+"Floor1"	"0/0/-"	""	""	""	""	"Auto"
+"Floor1 Room1 On/Off"	"0/0/1"	""	""	""	"DPST-1-1"	"Auto"
+"Floor1 Room1 Status"	"0/0/2"	""	""	""	"DPST-1-1"	"Auto"

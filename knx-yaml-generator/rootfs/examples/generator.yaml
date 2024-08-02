@@ -1,0 +1,4 @@
+light:
+  - grp: 0/
+    address: (.*) On/Off
+    state_address: (.*) Status
