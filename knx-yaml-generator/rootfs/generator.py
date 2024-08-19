@@ -21,6 +21,190 @@ class MyDumper(yaml.SafeDumper):
 class Generator:
     __instance = None
     __result = {}
+    __config = {
+        "binary_sensor": {
+            "required_fields": [
+                "state_address"
+            ],
+            "optional_fields": [
+            ]
+        },
+        "button": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+            ]
+        },
+        "climate": {
+            "required_fields": [
+                "temperature_address",
+                "target_temperature_state_address"
+            ],
+            "optional_fields": [
+                "target_temperature_address",
+                "setpoint_shift_address",
+                "setpoint_shift_state_address",
+                "active_state_address",
+                "command_value_state_address",
+                "operation_mode_address",
+                "operation_mode_state_address",
+                "controller_status_address",
+                "controller_status_state_address",
+                "controller_mode_address",
+                "controller_mode_state_address",
+                "heat_cool_address",
+                "heat_cool_state_address",
+                "operation_mode_frost_protection_address",
+                "operation_mode_night_address",
+                "operation_mode_comfort_address",
+                "operation_mode_standby_address",
+                "on_off_address",
+                "on_off_state_address"
+            ]
+        },
+        "cover": {
+            "required_fields": [
+            ],
+            "optional_fields": [
+                "move_long_address",
+                "move_short_address",
+                "stop_address",
+                "position_address",
+                "position_state_address",
+                "angle_address",
+                "angle_state_address"
+            ],
+            "require_one_of": ["move_long_address", "position_address"]
+        },
+        "date": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "datetime": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "fan": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address",
+                "oscillation_address",
+                "oscillation_state_address"
+            ]
+        },
+        "light": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address",
+                "brightness_address",
+                "brightness_state_address",
+                "color_address",
+                "rgbw_address",
+                "rgbw_state_address",
+                "hue_address",
+                "hue_state_address",
+                "saturation_address",
+                "saturation_state_address",
+                "xyy_address",
+                "xyy_state_address",
+                "color_temperature_address",
+                "color_temperature_state_address"
+            ]
+        },
+        "notify": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+            ]
+        },
+        "number": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "scene": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+            ]
+        },
+        "select": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "sensor": {
+            "required_fields": [
+                "state_address"
+            ],
+            "optional_fields": [
+            ]
+        },
+        "switch": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "text": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "time": {
+            "required_fields": [
+                "address"
+            ],
+            "optional_fields": [
+                "state_address"
+            ]
+        },
+        "weather": {
+            "required_fields": [
+                "address_temperature",
+            ],
+            "optional_fields": [
+                "address_brightness_south",
+                "address_brightness_west",
+                "address_brightness_east",
+                "address_brightness_north",
+                "address_wind_speed",
+                "address_rain_alarm",
+                "address_frost_alarm",
+                "address_wind_alarm",
+                "address_day_night",
+                "address_air_pressure",
+                "address_humidity",
+                "sync_state",
+            ]
+        }
+    }
 
     def instance() -> "Generator":
         if Generator.__instance is None:
@@ -42,30 +226,12 @@ class Generator:
 
         # handle entries
         for key in generator:
-            match key.lower():
-                case "light":
-                    for rule in generator[key]:
-                        self.__handleLightRule(key.lower(), rule)
+            if key not in self.__config:
+                print("Found invalid key in generator file: " + key)
+                continue
 
-                case "switch":
-                    for rule in generator[key]:
-                        self.__handleSwitchRule(key.lower(), rule)
-
-                case "binary_sensor":
-                    for rule in generator[key]:
-                        self.__handleBinarySensorRule(key.lower(), rule)
-
-                case "sensor":
-                    for rule in generator[key]:
-                        self.__handleSensorRule(key.lower(), rule)
-
-                case "cover":
-                    for rule in generator[key]:
-                        self.__handleCoverRule(key.lower(), rule)
-
-                case _:
-                    print("Found invalid key in generator file: " + key)
-                    continue
+            for rule in generator[key]:
+                self.__handleRule(key, self.__config[key], rule)
 
         # read add_entries and add it to the result
         addEntitiesPath = Settings.instance().path_add_entities
@@ -100,123 +266,50 @@ class Generator:
             ])
             yaml.dump(self.__result, file, Dumper=MyDumper, allow_unicode=True, sort_keys=False)
 
-    def __handleLightRule(self, key: str, rule) -> None:
-        addressItems = CsvReader.instance().query(rule.get("grp", None), rule.get("address", None), rule.get("address_ignore", None))
-        addressStateItems = CsvReader.instance().query(rule.get("grp", None), rule.get("state_address", None), rule.get("state_address_ignore", None))
+    def __handleRule(self, key: str, config, rule) -> None:
+        param = []
 
-        self.__addToResult(
-            [
-                {
-                    "data": addressItems,
-                    "required": True,
-                    "name": "address"
-                },
-                {
-                    "data": addressStateItems,
-                    "required": True,
-                    "name": "state_address"
-                }
-            ], key
-        )
+        for conf in config["required_fields"]:
+            items = CsvReader.instance().query(rule.get("grp", None), rule.get(conf, None), rule.get(conf + "_ignore", None), rule.get("name", None))
+            param.append({
+                "data": items,
+                "required": True,
+                "name": conf
+            })
 
-    def __handleSwitchRule(self, key: str, rule) -> None:
-        addressItems = CsvReader.instance().query(rule.get("grp", None), rule.get("address", None), rule.get("address_ignore", None))
-        addressStateItems = CsvReader.instance().query(rule.get("grp", None), rule.get("state_address", None), rule.get("state_address_ignore", None))
+        for conf in config["optional_fields"]:
+            items = CsvReader.instance().query(rule.get("grp", None), rule.get(conf, None), rule.get(conf + "_ignore", None), rule.get("name", None))
+            param.append({
+                "data": items,
+                "required": False,
+                "name": conf
+            })
 
-        self.__addToResult(
-            [
-                {
-                    "data": addressItems,
-                    "required": True,
-                    "name": "address"
-                },
-                {
-                    "data": addressStateItems,
-                    "required": True,
-                    "name": "state_address"
-                },
-                {
-                    "name": "device_class",
-                    "data": "outlet"
-                }
-            ], key
-        )
+        # Add static values
+        for ruleKey, ruleValue in rule.items():
+            # Ignore all handled rules
+            match ruleKey:
+                case "grp" | "name":
+                    continue
 
-    def __handleBinarySensorRule(self, key: str, rule) -> None:
-        addressStateItems = CsvReader.instance().query(rule.get("grp", None), rule.get("state_address", None), rule.get("state_address_ignore", None))
+            if ruleKey in config["required_fields"] or ruleKey.replace("_ignore", "") in config["required_fields"]:
+                continue
 
-        self.__addToResult(
-            [
-                {
-                    "data": addressStateItems,
-                    "required": True,
-                    "name": "state_address"
-                }
-            ], key
-        )
+            if ruleKey in config["optional_fields"] or ruleKey.replace("_ignore", "") in config["optional_fields"]:
+                continue
 
-    def __handleSensorRule(self, key: str, rule) -> None:
-        addressStateItems = CsvReader.instance().query(rule.get("grp", None), rule.get("state_address", None), rule.get("state_address_ignore", None))
+            param.append({
+                "custom_data": ruleValue,
+                "name": ruleKey
+            })
 
-        self.__addToResult(
-            [
-                {
-                    "data": addressStateItems,
-                    "required": True,
-                    "name": "state_address"
-                },
-                {
-                    "name": "type",
-                    "data": rule["type"]
-                }
-            ], key
-        )
+        self.__addToResult(param, config.get("require_one_of", None), key)
 
-    def __handleCoverRule(self, key: str, rule) -> None:
-        moveLongItems = CsvReader.instance().query(rule.get("grp", None), rule.get("move_long_address", None), rule.get("move_long_address_ignore", None))
-        moveShortItems = CsvReader.instance().query(rule.get("grp", None), rule.get("move_short_address", None), rule.get("move_short_address_ignore", None))
-        stopItems = CsvReader.instance().query(rule.get("grp", None), rule.get("stop_address", None), rule.get("stop_address_ignore", None))
-        positionItems = CsvReader.instance().query(rule.get("grp", None), rule.get("position_address", None), rule.get("position_address_ignore", None))
-        positionStateItems = CsvReader.instance().query(rule.get("grp", None), rule.get("position_state_address", None), rule.get("position_state_address_ignore", None))
-
-        # remove all items from long items that are also in short items
-        moveLongItems = [i for i in moveLongItems if i not in moveShortItems]
-
-        self.__addToResult(
-            [
-                {
-                    "data": moveLongItems,
-                    "required": True,
-                    "name": "move_long_address"
-                },
-                {
-                    "data": moveShortItems,
-                    "required": False,
-                    "name": "move_short_address"
-                },
-                {
-                    "data": stopItems,
-                    "required": True,
-                    "name": "stop_address"
-                },
-                {
-                    "data": positionItems,
-                    "required": True,
-                    "name": "position_address"
-                },
-                {
-                    "data": positionStateItems,
-                    "required": True,
-                    "name": "position_state_address"
-                },
-            ], key
-        )
-
-    def __addToResult(self, datas, key) -> None:
+    def __addToResult(self, datas, requireOneOf, key) -> None:
         tempResult = {}
 
         for dataItem in datas:
-            if isinstance(dataItem["data"], list):
+            if "data" in dataItem:
                 for item in dataItem["data"]:
                     if item.matchName not in tempResult:
                         tempResult[item.matchName] = {
@@ -227,9 +320,12 @@ class Generator:
 
         # Add constant values to items
         for dataItem in datas:
-            if isinstance(dataItem["data"], str):
+            if "custom_data" in dataItem:
                 for matchName in tempResult:
-                    tempResult[matchName][dataItem["name"]] = dataItem["data"]
+                    if isinstance(dataItem["custom_data"], list):
+                        tempResult[matchName][dataItem["name"]] = dataItem["custom_data"][:]
+                    else:
+                        tempResult[matchName][dataItem["name"]] = dataItem["custom_data"]
 
         # Put all complete items to result
         result = []
@@ -237,13 +333,22 @@ class Generator:
         for matchName in tempResult:
             complete = True
             for dataItem in datas:
-                if isinstance(dataItem["data"], list):
+                if "data" in dataItem:
                     if dataItem["required"] and dataItem["name"] not in tempResult[matchName]:
                         complete = False
                         break
 
             if complete:
-                result.append(tempResult[matchName])
+                # Check if require_one_of is fullfilled
+                if requireOneOf is not None:
+                    foundOne = False
+                    for required in requireOneOf:
+                        if required in tempResult[matchName]:
+                            foundOne = True
+                            break
+
+                if requireOneOf is None or foundOne:
+                    result.append(tempResult[matchName])
 
         if len(result) > 0:
             if key not in self.__result:

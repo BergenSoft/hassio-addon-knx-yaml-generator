@@ -45,7 +45,7 @@ class CsvReader:
                         row[1]
                     ))
 
-    def query(self, grp: str | None, regex: str, regexIgnore: str) -> List["CsvItem"]:
+    def query(self, grp: str | None, regex: str | None, regexIgnore: str | None, namePattern: str | None) -> List["CsvItem"]:
         # This happens if a key is not set
         if regex is None:
             return []
@@ -70,8 +70,19 @@ class CsvReader:
         for item in sublist:
             findResult = re.findall("^" + regex + "$", item.name)
             if len(findResult) > 0:
-                item.matchName = findResult[0]
+                item.matchName = self.__getMatchName(item, findResult[0], namePattern)
             else:
                 item.matchName = None
 
         return sublist
+
+    def __getMatchName(self, item: CsvItem, regexName: str, namePattern: str | None) -> str:
+        # The default is the name found by the regex
+        if namePattern is None:
+            return regexName
+
+        # If set, replace placeholders
+        namePattern = namePattern.replace("${main}", item.mainName)
+        namePattern = namePattern.replace("${middle}", item.middleName)
+        namePattern = namePattern.replace("${name}", regexName)
+        return namePattern

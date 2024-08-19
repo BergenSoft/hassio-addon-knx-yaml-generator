@@ -33,60 +33,52 @@ The configuration of the addon is pretty simple. You have just to define some pa
 
 The absolute path to the generator.yaml file. If it doesn't exists an example is created.
 
-At the moment the following knx types are supported:
+All knx entity types that currently exists are supported:
 
--   light
--   switch
 -   binary_sensor
--   sensor
+-   button
+-   climate
 -   cover
+-   date
+-   datetime
+-   fan
+-   light
+-   notify
+-   number
+-   scene
+-   select
+-   sensor
+-   switch
+-   text
+-   time
+-   weather
 
 The format is the following:
 
 ```YAML
-light:
-  - grp: grp_filter [Optional]
-    address: regex
-    address_ignore: regex [Optional]
-    state_address: regex
-    state_address_ignore: regex [Optional]
-
-switch:
-  - grp: grp_filter [Optional]
-    address: regex
-    address_ignore: regex [Optional]
-    state_address: regex
-    state_address_ignore: regex [Optional]
-
-binary_sensor:
-  - grp: grp_filter [Optional]
-    state_address: regex
-    state_address_ignore: regex [Optional]
-
-sensor:
-  - grp: grp_filter [Optional]
-    state_address: regex
-    state_address_ignore: regex [Optional]
-    type: knx_sensor_type
-
-cover:
-  - grp: grp_filter [Optional]
-    move_long_address: regex
-    move_long_address_ignore: regex [Optional]
-    move_short_address: regex [Optional]
-    move_short_address_ignore: regex [Optional]
-    stop_address: regex
-    stop_address_ignore: regex [Optional]
-    position_address: regex
-    position_address_ignore: regex [Optional]
-    position_state_address: regex
-    position_state_address_ignore: regex [Optional]
+<knx entity name>:
+  - grp: <grp_filter> [Optional]
+    name: <name_pattern> [Optional]
+    address_name: <regex>  [Required or Optional, see hassio knx documentation]
+    address_name_ignore: <regex> [Optional]
 
 ```
 
-For each type there can be as much as rules needed.
-If you add other key-value entries, they will be ignored.
-That means you could also add `comment: Note for me` if you want.
+Each address that exists for a specific knx type can be used.
+You can always append "_ignore" to reduce the addresses that where found, if needed.
+
+Here an example for a light
+```YAML
+light:
+  - grp: 1/
+    name: ${middle} ${name}
+    address: "(.*) On/Off"
+    address_ignore: ".* Secret On/Off"
+    state_address: "(.*) Status"
+
+```
+
+For each type there can be as much rules as needed.
 
 **grp_filter**<br/>
 Group address filter are always optional.
@@ -97,6 +89,35 @@ Example:
 ```YAML
 grp: "0/"   #This will match all addresses starting with 0/
 grp: "0/1/" #This will match all addresses starting with 0/1/
+```
+
+**name_pattern**<br/>
+Name pattern are always optional.
+With the name pattern you can define the resulting name that will be used in the knx entities.
+The default is to use the part of the group address name that is found by the regex (see next point).
+You can define some static text or use some placeholders.
+
+You can use this placeholders:
+
+-   `${main}` The name of the main group
+-   `${middle}` The name of the middle group
+-   `${name}` The name of the regex matching name of the last group
+
+Example:
+
+```YAML
+# Lets assume you have this structure:
+# 1     Type
+# 1/0   Floor 0
+# 1/0/0 Room 1 On/Off
+# 1/0/1 Room 1 Status
+#
+# and the regex will match "Room 1"
+
+name: ${name}                   # => Room 1  (This is the default)
+name: ${middle} ${name}         # => Floor 0 Room 1
+name: ${main} ${middle} ${name} # => Type Floor 0 Room 1
+name: ${main} ${name}           # => Type Room 1
 ```
 
 **regex**<br/>
